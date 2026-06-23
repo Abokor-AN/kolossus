@@ -33,6 +33,12 @@ Le script demande `sudo`, met le système à jour, installe les paquets, active
 les services nécessaires, déploie les dotfiles et valide Hyprland. Il ne touche
 pas au partitionnement, au chiffrement, à Secure Boot ou aux snapshots.
 
+Pour reprendre une installation dont les paquets sont déjà installés :
+
+```bash
+./finish.sh
+```
+
 Pour redéployer uniquement les dotfiles :
 
 ```bash
