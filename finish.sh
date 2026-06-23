@@ -48,23 +48,23 @@ if systemctl --user show-environment >/dev/null 2>&1; then
   systemctl --user start wireplumber.service || true
 fi
 
-display_manager_path=$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null || true)
-if [[ -n $display_manager_path ]]; then
-  display_manager_unit=$(basename "$display_manager_path")
-elif systemctl list-unit-files sddm.service --no-legend 2>/dev/null | grep -q '^sddm.service'; then
-  display_manager_unit=sddm.service
-  sudo systemctl enable "$display_manager_unit"
-else
-  printf 'Aucun gestionnaire graphique disponible. Le paquet sddm est manquant.\n' >&2
-  exit 1
+mkdir -p "$KOLLOSSUS_DIR/verification"
+printf 'Capture initiale en attente.\n' >"$KOLLOSSUS_DIR/verification/pending"
+
+display_manager_unit=sddm.service
+
+if ! systemctl list-unit-files "$display_manager_unit" --no-legend 2>/dev/null | grep -q '^sddm.service'; then
+  printf 'Le paquet SDDM est installé sans unité sddm.service exploitable.\n' >&2
+  printf 'Démarrage direct de Hyprland avec UWSM...\n'
+  exec uwsm start -e -D Hyprland hyprland.desktop
 fi
 
-printf '\nDémarrage de l’interface graphique avec %s...\n' "$display_manager_unit"
-if ! sudo systemctl start "$display_manager_unit"; then
-  printf '\nÉchec du gestionnaire graphique. Derniers journaux :\n' >&2
-  sudo journalctl -b -u "$display_manager_unit" -n 80 --no-pager >&2
-  exit 1
+printf '\nActivation et démarrage de %s...\n' "$display_manager_unit"
+if ! sudo systemctl enable --now "$display_manager_unit"; then
+  printf '\nÉchec de SDDM. Derniers journaux :\n' >&2
+  sudo journalctl -b -u "$display_manager_unit" -n 80 --no-pager >&2 || true
+  printf 'Démarrage direct de Hyprland avec UWSM...\n'
+  exec uwsm start -e -D Hyprland hyprland.desktop
 fi
 
-printf 'Le gestionnaire graphique est démarré. Sélectionne Hyprland (uwsm-managed).\n'
-
+printf 'SDDM est démarré. Sélectionne Hyprland (uwsm-managed).\n'
