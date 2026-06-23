@@ -1,0 +1,41 @@
+#!/bin/bash
+
+mode=${1:-region}
+
+if command -v grimblast >/dev/null; then
+  case $mode in
+  region)
+    grimblast --notify copy area
+    ;;
+  window)
+    grimblast --notify copy active
+    ;;
+  output)
+    grimblast --notify copy output
+    ;;
+  *)
+    printf 'Usage: %s [region|window|output]\n' "${0##*/}" >&2
+    exit 2
+    ;;
+  esac
+elif command -v hyprshot >/dev/null; then
+  case $mode in
+  region)
+    hyprshot -m region --clipboard-only
+    ;;
+  window)
+    hyprshot -m window --clipboard-only
+    ;;
+  output)
+    hyprshot -m output --clipboard-only
+    ;;
+  *)
+    printf 'Usage: %s [region|window|output]\n' "${0##*/}" >&2
+    exit 2
+    ;;
+  esac
+else
+  notify-send -u critical "Kolossus" "Installe grimblast ou hyprshot pour les captures."
+  exit 1
+fi
+

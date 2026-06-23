@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if ! pgrep -x hyprlock >/dev/null; then
+  hyprlock &
+fi
+
+hyprctl switchxkblayout all 0 >/dev/null 2>&1
+
+(
+  sleep 3
+  if pgrep -x hyprlock >/dev/null; then
+    hyprctl dispatch dpms off >/dev/null 2>&1
+  fi
+) &
+

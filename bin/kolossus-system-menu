@@ -1,0 +1,22 @@
+#!/bin/bash
+
+choice=$(printf '%s\n' "Lock" "Suspend" "Log out" "Reboot" "Shut down" | walker --dmenu --placeholder "System")
+
+case $choice in
+"Lock")
+  kolossus-lock
+  ;;
+"Suspend")
+  systemctl suspend
+  ;;
+"Log out")
+  hyprctl dispatch exit
+  ;;
+"Reboot")
+  systemctl reboot
+  ;;
+"Shut down")
+  systemctl poweroff
+  ;;
+esac
+
