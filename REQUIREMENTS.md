@@ -1,16 +1,16 @@
 # Dépendances
 
-Kolossus n'installe aucun paquet. Les configurations supposent la présence des
-commandes suivantes :
+`packages.txt` contient exclusivement des paquets présents dans les dépôts
+officiels Arch Linux. Aucun dépôt Omarchy ou paquet AUR n’est requis.
 
-- bureau : `Hyprland`, `hypridle`, `hyprlock`, `waybar`, `walker`, `elephant` ;
-- applications : `alacritty`, `firefox`, `thunar`, `zeditor` ;
-- session : `mako`, `swaybg`, `swayosd-server`, `swayosd-client` ;
-- contrôle : `brightnessctl`, `playerctl`, `wpctl`, `wiremix`, `impala`, `bluetui` ;
-- outils : `btop`, `jq`, `hyprpicker` ;
-- capture : `grimblast` ou `hyprshot` ;
-- police : `JetBrainsMono Nerd Font`.
+Le bootstrap installe notamment :
 
-Le script `install.sh` vérifie uniquement le déploiement des dotfiles. Il ne
-modifie pas les paquets du système.
+- Hyprland, UWSM, Waybar, Fuzzel, Mako et les portails Wayland ;
+- Alacritty, Firefox, Thunar et Zed ;
+- PipeWire, WirePlumber, SwayOSD et les contrôles multimédias ;
+- SDDM, Polkit, GNOME Keyring et les services du portable ;
+- les pilotes Intel nécessaires au ThinkPad ;
+- les polices et utilitaires utilisés par les raccourcis.
 
+`bootstrap.sh` effectue l’installation complète. `install.sh` reste disponible
+pour redéployer uniquement les dotfiles.

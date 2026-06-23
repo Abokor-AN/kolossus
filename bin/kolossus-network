@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if systemctl is-active NetworkManager.service >/dev/null 2>&1; then
+  exec nm-connection-editor
+elif systemctl is-active iwd.service >/dev/null 2>&1; then
+  exec alacritty -e impala
+else
+  notify-send -u critical "Kolossus" "Aucun service réseau actif"
+  exit 1
+fi
+

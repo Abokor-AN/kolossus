@@ -2,7 +2,7 @@
 
 ## Décisions confirmées
 
-- Type de projet : dotfiles
+- Type de projet : bootstrap système et dotfiles
 - Machine cible : Lenovo ThinkPad E14 Gen 4 (21E30091GP)
 - Processeur : Intel Core i7-1255U
 - Graphismes : Intel Iris Xe avec pilote `i915`
@@ -10,7 +10,7 @@
 - Audio : Intel Alder Lake avec pilote SOF
 - Stockage matériel : SSD NVMe WD PC SN740 512 Go
 - Système : Arch Linux déjà installé avec Archinstall
-- Session actuelle : Hyprland sous Wayland avec Waybar installé
+- Session cible : Hyprland sous Wayland avec Waybar
 - Stockage : chiffrement déjà configuré
 - Démarrage : Secure Boot déjà configuré
 - Restauration : snapshots déjà configurés
@@ -26,11 +26,10 @@
 - Waybar : disposition compacte inspirée d’Omarchy
 - Raccourcis : raccourcis principaux d’Omarchy avec commandes autonomes
 - Inactivité : verrouillage après cinq minutes, comme le délai Omarchy
-- Paquets : aucun installateur automatique pour le moment
+- Paquets : bootstrap complet depuis les dépôts officiels Arch
 - Déploiement : liens symboliques avec sauvegarde automatique
 
 ## Décisions futures
 
 - personnalisation supplémentaire du thème Retro-82 ;
-- ajout éventuel d’un manifeste ou installateur de paquets ;
 - réglage spécifique d’un écran externe lorsqu’il sera connu.

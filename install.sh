@@ -38,8 +38,9 @@ config_directories=(
   mako
   swaybg
   swayosd
-  walker
+  fuzzel
   waybar
+  wireplumber
 )
 
 config_files=(

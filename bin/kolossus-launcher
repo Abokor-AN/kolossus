@@ -1,9 +1,22 @@
 #!/bin/bash
 
-if ! pgrep -x elephant >/dev/null; then
-  elephant >/dev/null 2>&1 &
-  sleep 0.2
-fi
+mode=${1:-apps}
 
-exec walker "$@"
-
+case $mode in
+apps)
+  exec fuzzel
+  ;;
+clipboard)
+  selection=$(cliphist list | fuzzel --dmenu --prompt="Clipboard > ")
+  if [[ -n $selection ]]; then
+    cliphist decode <<<"$selection" | wl-copy
+  fi
+  ;;
+symbols)
+  exec rofimoji --selector fuzzel
+  ;;
+*)
+  printf 'Usage: %s [apps|clipboard|symbols]\n' "${0##*/}" >&2
+  exit 2
+  ;;
+esac

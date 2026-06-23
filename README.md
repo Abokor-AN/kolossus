@@ -15,20 +15,25 @@ la pile de bureau d'Omarchy sans modifier ni dupliquer son dépôt source.
 ## État
 
 La première version comprend Hyprland, les raccourcis principaux d’Omarchy, le
-profil portable Omarchy, Waybar, Walker, Mako, SwayOSD et Alacritty aux couleurs
+profil portable Omarchy, Waybar, Fuzzel, Mako, SwayOSD et Alacritty aux couleurs
 Retro-82. Firefox, Thunar et Zed sont les applications par défaut.
 
-Les dépendances sont documentées dans `REQUIREMENTS.md` mais ne sont pas
-installées automatiquement.
+Les dépendances officielles Arch sont documentées dans `REQUIREMENTS.md` et sont
+installées par le bootstrap complet.
 
-## Déploiement
+## Installation complète
 
-Vérifier les dépendances, puis lancer :
+Depuis un Arch Linux installé avec Archinstall, lancer avec l’utilisateur normal :
+
 ```bash
-./check.sh
+./bootstrap.sh
 ```
 
-Puis déployer :
+Le script demande `sudo`, met le système à jour, installe les paquets, active
+les services nécessaires, déploie les dotfiles et valide Hyprland. Il ne touche
+pas au partitionnement, au chiffrement, à Secure Boot ou aux snapshots.
+
+Pour redéployer uniquement les dotfiles :
 
 ```bash
 ./install.sh

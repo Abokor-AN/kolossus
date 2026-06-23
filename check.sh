@@ -5,8 +5,12 @@ required_commands=(
   hypridle
   hyprlock
   waybar
-  walker
-  elephant
+  fuzzel
+  cliphist
+  grim
+  rofimoji
+  slurp
+  wl-copy
   alacritty
   firefox
   thunar
@@ -26,7 +30,6 @@ required_commands=(
   hyprpicker
 )
 
-
 missing=0
 
 for command in "${required_commands[@]}"; do
@@ -37,14 +40,6 @@ for command in "${required_commands[@]}"; do
     ((missing++))
   fi
 done
-
-if command -v grimblast >/dev/null || command -v hyprshot >/dev/null; then
-  printf 'ok       capture d’écran\n'
-else
-  printf 'manquant grimblast ou hyprshot\n'
-  ((missing++))
-fi
-
 
 if ((missing > 0)); then
   printf '\n%d dépendance(s) requise(s) manquante(s).\n' "$missing" >&2

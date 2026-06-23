@@ -61,7 +61,7 @@
     "tooltip-format-disconnected": "Disconnected",
     "interval": 3,
     "spacing": 1,
-    "on-click": "alacritty -e impala"
+    "on-click": "kolossus-network"
   },
   "battery": {
     "format": "{capacity}% {icon}",

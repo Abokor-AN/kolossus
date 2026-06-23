@@ -1,6 +1,6 @@
 #!/bin/bash
 
-choice=$(printf '%s\n' "Lock" "Suspend" "Log out" "Reboot" "Shut down" | walker --dmenu --placeholder "System")
+choice=$(printf '%s\n' "Lock" "Suspend" "Log out" "Reboot" "Shut down" | fuzzel --dmenu --prompt="System > ")
 
 case $choice in
 "Lock")
