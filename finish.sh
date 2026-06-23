@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -Euo pipefail
+set -eEuo pipefail
 
 KOLLOSSUS_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
@@ -32,6 +32,9 @@ xdg-user-dirs-update
 printf '\nValidation des dépendances et de Hyprland...\n'
 "$KOLLOSSUS_DIR/check.sh"
 Hyprland --verify-config --config "$HOME/.config/hypr/hyprland.conf"
+
+printf '\nInstallation des thèmes de démarrage et de connexion...\n'
+"$KOLLOSSUS_DIR/install-system-themes.sh"
 
 printf '\nActivation des services complémentaires...\n'
 enable_optional_unit bluetooth.service

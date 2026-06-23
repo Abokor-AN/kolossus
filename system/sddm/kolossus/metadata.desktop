@@ -1,0 +1,11 @@
+[SddmGreeterTheme]
+Name=Kolossus
+Description=Écran de connexion Kolossus / Retro-82
+Author=Kolossus
+Type=sddm-theme
+Version=1.0
+QtVersion=6
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-Id=kolossus
+Theme-API=2.0

@@ -16,6 +16,8 @@
 - Restauration : snapshots déjà configurés
 - Locale, clavier système et fuseau horaire : déjà configurés
 - Base visuelle : thème Omarchy Retro-82
+- Déverrouillage LUKS : thème Plymouth Kolossus, modifiable dans `system/plymouth/`
+- Connexion utilisateur : thème SDDM Kolossus, modifiable dans `system/sddm/`
 - Terminal : Alacritty
 - Shell : Bash
 - Éditeur : Zed

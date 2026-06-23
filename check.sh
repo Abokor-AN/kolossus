@@ -15,6 +15,8 @@ required_commands=(
   firefox
   thunar
   zeditor
+  plymouth-set-default-theme
+  sddm-greeter-qt6
   mako
   swaybg
   swayosd-server

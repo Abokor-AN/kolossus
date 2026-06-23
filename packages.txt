@@ -56,6 +56,7 @@ wireplumber
 # Session et sécurité du bureau
 accountsservice
 gnome-keyring
+plymouth
 polkit
 polkit-gnome
 sddm

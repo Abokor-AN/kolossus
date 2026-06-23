@@ -1,0 +1,132 @@
+# Kolossus Plymouth theme
+# Couleurs Retro-82. Modifier aussi render-assets.sh pour garder les assets alignés.
+
+Window.SetBackgroundTopColor(0.020, 0.094, 0.180);
+Window.SetBackgroundBottomColor(0.000, 0.090, 0.180);
+
+global.password_visible = 0;
+
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+logo.x = Window.GetX() + Window.GetWidth() / 2 - logo.image.GetWidth() / 2;
+logo.y = Window.GetY() + Window.GetHeight() * 0.35 - logo.image.GetHeight() / 2;
+logo.sprite.SetPosition(logo.x, logo.y, 10);
+
+boot_label.image = Image("boot-label.png");
+boot_label.sprite = Sprite(boot_label.image);
+boot_label.x = Window.GetX() + Window.GetWidth() / 2 - boot_label.image.GetWidth() / 2;
+boot_label.y = logo.y + logo.image.GetHeight() + 28;
+boot_label.sprite.SetPosition(boot_label.x, boot_label.y, 11);
+
+password_label.image = Image("password-label.png");
+password_label.sprite = Sprite(password_label.image);
+password_label.x = Window.GetX() + Window.GetWidth() / 2 - password_label.image.GetWidth() / 2;
+password_label.y = boot_label.y;
+password_label.sprite.SetPosition(password_label.x, password_label.y, 12);
+password_label.sprite.SetOpacity(0);
+
+entry.image = Image("entry.png");
+entry.sprite = Sprite(entry.image);
+entry.x = Window.GetX() + Window.GetWidth() / 2 - entry.image.GetWidth() / 2;
+entry.y = password_label.y + password_label.image.GetHeight() + 24;
+entry.sprite.SetPosition(entry.x, entry.y, 100);
+entry.sprite.SetOpacity(0);
+
+lock.image = Image("lock.png");
+lock.sprite = Sprite(lock.image);
+lock.x = entry.x - lock.image.GetWidth() - 18;
+lock.y = entry.y + entry.image.GetHeight() / 2 - lock.image.GetHeight() / 2;
+lock.sprite.SetPosition(lock.x, lock.y, 101);
+lock.sprite.SetOpacity(0);
+
+bullet.image = Image("bullet.png");
+bullet.sprites = [];
+
+progress_box.image = Image("progress-box.png");
+progress_box.sprite = Sprite(progress_box.image);
+progress_box.x = Window.GetX() + Window.GetWidth() / 2 - progress_box.image.GetWidth() / 2;
+progress_box.y = entry.y + entry.image.GetHeight() / 2 - progress_box.image.GetHeight() / 2;
+progress_box.sprite.SetPosition(progress_box.x, progress_box.y, 20);
+
+progress_bar.original_image = Image("progress-bar.png");
+progress_bar.image = progress_bar.original_image.Scale(1, progress_bar.original_image.GetHeight());
+progress_bar.sprite = Sprite(progress_bar.image);
+progress_bar.x = Window.GetX() + Window.GetWidth() / 2 - progress_bar.original_image.GetWidth() / 2;
+progress_bar.y = progress_box.y +
+  (progress_box.image.GetHeight() - progress_bar.original_image.GetHeight()) / 2;
+progress_bar.sprite.SetPosition(progress_bar.x, progress_bar.y, 21);
+
+fun set_password_opacity(opacity) {
+  entry.sprite.SetOpacity(opacity);
+  lock.sprite.SetOpacity(opacity);
+  password_label.sprite.SetOpacity(opacity);
+
+  for (index = 0; bullet.sprites[index]; index++) {
+    bullet.sprites[index].SetOpacity(0);
+  }
+}
+
+fun display_normal_callback() {
+  global.password_visible = 0;
+  set_password_opacity(0);
+  boot_label.sprite.SetOpacity(1);
+  progress_box.sprite.SetOpacity(1);
+  progress_bar.sprite.SetOpacity(1);
+}
+
+fun display_password_callback(prompt, bullets) {
+  global.password_visible = 1;
+  boot_label.sprite.SetOpacity(0);
+  progress_box.sprite.SetOpacity(0);
+  progress_bar.sprite.SetOpacity(0);
+  set_password_opacity(1);
+
+  max_bullets = 28;
+  bullets_to_show = bullets;
+  if (bullets_to_show > max_bullets) bullets_to_show = max_bullets;
+
+  for (index = 0; bullet.sprites[index] || index < bullets_to_show; index++) {
+    if (!bullet.sprites[index]) {
+      bullet.sprites[index] = Sprite(bullet.image);
+      bullet.x = entry.x + 24 + index * 20;
+      bullet.y = entry.y + entry.image.GetHeight() / 2 - bullet.image.GetHeight() / 2;
+      bullet.sprites[index].SetPosition(bullet.x, bullet.y, 102);
+    }
+
+    if (index < bullets_to_show)
+      bullet.sprites[index].SetOpacity(1);
+    else
+      bullet.sprites[index].SetOpacity(0);
+  }
+}
+
+fun progress_callback(duration, progress) {
+  if (global.password_visible == 0) {
+    width = Math.Int(progress_bar.original_image.GetWidth() * progress);
+    if (width < 1) width = 1;
+    progress_bar.image = progress_bar.original_image.Scale(
+      width,
+      progress_bar.original_image.GetHeight()
+    );
+    progress_bar.sprite.SetImage(progress_bar.image);
+  }
+}
+
+message.sprite = Sprite();
+message.sprite.SetPosition(20, 20, 1000);
+
+fun display_message_callback(text) {
+  message.image = Image.Text(text, 0.965, 0.863, 0.675);
+  message.sprite.SetImage(message.image);
+  message.sprite.SetOpacity(1);
+}
+
+fun hide_message_callback(text) {
+  message.sprite.SetOpacity(0);
+}
+
+Plymouth.SetDisplayNormalFunction(display_normal_callback);
+Plymouth.SetDisplayPasswordFunction(display_password_callback);
+Plymouth.SetBootProgressFunction(progress_callback);
+Plymouth.SetDisplayMessageFunction(display_message_callback);
+Plymouth.SetHideMessageFunction(hide_message_callback);

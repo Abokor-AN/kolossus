@@ -9,6 +9,7 @@ Le bootstrap installe notamment :
 - Alacritty, Firefox, Thunar et Zed ;
 - PipeWire, WirePlumber, SwayOSD et les contrôles multimédias ;
 - SDDM, Polkit, GNOME Keyring et les services du portable ;
+- Plymouth pour l’interface graphique de déverrouillage LUKS ;
 - les pilotes Intel nécessaires au ThinkPad ;
 - les polices et utilitaires utilisés par les raccourcis.
 
