@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -euo pipefail
+
+color=$(niri msg pick-color) || exit 0
+printf '%s' "$color" | wl-copy
+notify-send "Couleur copiée" "$color"

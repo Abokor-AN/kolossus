@@ -29,9 +29,9 @@ printf '\nDéploiement des dotfiles Kolossus...\n'
 xdg-user-dirs-update
 "$KOLLOSSUS_DIR/install.sh"
 
-printf '\nValidation des dépendances et de Hyprland...\n'
+printf '\nValidation des dépendances et de Niri...\n'
 "$KOLLOSSUS_DIR/check.sh"
-Hyprland --verify-config --config "$HOME/.config/hypr/hyprland.conf"
+niri validate --config "$HOME/.config/niri/config.kdl"
 
 printf '\nActivation des services complémentaires...\n'
 enable_optional_unit bluetooth.service
@@ -49,22 +49,22 @@ if systemctl --user show-environment >/dev/null 2>&1; then
 fi
 
 mkdir -p "$KOLLOSSUS_DIR/verification"
-printf 'Capture initiale en attente.\n' >"$KOLLOSSUS_DIR/verification/pending"
+printf 'Vérification initiale en attente.\n' >"$KOLLOSSUS_DIR/verification/pending"
 
 display_manager_unit=sddm.service
 
 if ! systemctl list-unit-files "$display_manager_unit" --no-legend 2>/dev/null | grep -q '^sddm.service'; then
   printf 'Le paquet SDDM est installé sans unité sddm.service exploitable.\n' >&2
-  printf 'Démarrage direct de Hyprland avec UWSM...\n'
-  exec uwsm start -e -D Hyprland hyprland.desktop
+  printf 'Démarrage direct de Niri...\n'
+  exec niri-session -l
 fi
 
 printf '\nActivation et démarrage de %s...\n' "$display_manager_unit"
 if ! sudo systemctl enable --now "$display_manager_unit"; then
   printf '\nÉchec de SDDM. Derniers journaux :\n' >&2
   sudo journalctl -b -u "$display_manager_unit" -n 80 --no-pager >&2 || true
-  printf 'Démarrage direct de Hyprland avec UWSM...\n'
-  exec uwsm start -e -D Hyprland hyprland.desktop
+  printf 'Démarrage direct de Niri...\n'
+  exec niri-session -l
 fi
 
-printf 'SDDM est démarré. Sélectionne Hyprland (uwsm-managed).\n'
+printf 'SDDM est démarré. Sélectionne Niri.\n'

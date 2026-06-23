@@ -1,0 +1,13 @@
+# Ancienne pile Hyprland
+hyprland
+hypridle
+hyprlock
+hyprpicker
+hyprsunset
+uwsm
+xdg-desktop-portal-hyprland
+
+# Outils remplacés par les fonctions natives de Niri
+grim
+satty
+slurp

@@ -14,9 +14,10 @@ la pile de bureau d'Omarchy sans modifier ni dupliquer son dépôt source.
 
 ## État
 
-La première version comprend Hyprland, les raccourcis principaux d’Omarchy, le
-profil portable Omarchy, Waybar, Fuzzel, Mako, SwayOSD et Alacritty aux couleurs
-Retro-82. Firefox, Thunar et Zed sont les applications par défaut.
+Le bureau utilise Niri et sa disposition en colonnes défilantes, avec Waybar,
+Fuzzel, Mako, SwayOSD, Swayidle, Swaylock et Alacritty aux couleurs Retro-82.
+Firefox, Thunar et Zed sont les applications par défaut. Xwayland-satellite
+assure la compatibilité avec les applications X11.
 
 Les dépendances officielles Arch sont documentées dans `REQUIREMENTS.md` et sont
 installées par le bootstrap complet.
@@ -30,7 +31,8 @@ Depuis un Arch Linux installé avec Archinstall, lancer avec l’utilisateur nor
 ```
 
 Le script demande `sudo`, met le système à jour, installe les paquets, active
-les services nécessaires, déploie les dotfiles et valide Hyprland. Il ne touche
+les services nécessaires, supprime l’ancienne pile Hyprland, déploie les
+dotfiles et valide Niri. Il ne touche
 pas au partitionnement, au chiffrement, à Secure Boot ou aux snapshots.
 
 Pour reprendre une installation dont les paquets sont déjà installés :
@@ -47,7 +49,7 @@ Pour redéployer uniquement les dotfiles :
 
 Le script utilise des liens symboliques et sauvegarde les fichiers remplacés
 sous `~/.local/state/kolossus/backups/`. Il faut ensuite fermer et rouvrir la
-session Hyprland.
+session Niri.
 
 ## Origine
 

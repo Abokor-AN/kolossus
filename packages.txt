@@ -1,17 +1,15 @@
 # Bureau Wayland
-hyprland
-hypridle
-hyprlock
-hyprpicker
-hyprsunset
-uwsm
+niri
+swayidle
+swaylock
 waybar
 fuzzel
 mako
 swaybg
 swayosd
+xwayland-satellite
 xorg-xwayland
-xdg-desktop-portal-hyprland
+xdg-desktop-portal-gnome
 xdg-desktop-portal-gtk
 
 # Applications choisies
@@ -29,7 +27,6 @@ bluez
 bluez-utils
 brightnessctl
 cliphist
-grim
 impala
 iwd
 libnotify
@@ -38,8 +35,6 @@ nm-connection-editor
 pavucontrol
 playerctl
 rofimoji
-satty
-slurp
 wiremix
 wl-clipboard
 wtype

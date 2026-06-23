@@ -1,0 +1,19 @@
+#!/bin/bash
+
+set -euo pipefail
+
+case ${1:-} in
+copy)
+  exec wtype -M ctrl -k Insert -m ctrl
+  ;;
+paste)
+  exec wtype -M shift -k Insert -m shift
+  ;;
+cut)
+  exec wtype -M ctrl -k x -m ctrl
+  ;;
+*)
+  printf 'Usage: %s {copy|paste|cut}\n' "${0##*/}" >&2
+  exit 2
+  ;;
+esac

@@ -1,15 +1,15 @@
 #!/bin/bash
 
 required_commands=(
-  Hyprland
-  hypridle
-  hyprlock
+  niri
+  niri-session
+  swayidle
+  swaylock
+  xwayland-satellite
   waybar
   fuzzel
   cliphist
-  grim
   rofimoji
-  slurp
   wl-copy
   alacritty
   firefox
@@ -27,7 +27,6 @@ required_commands=(
   bluetui
   btop
   jq
-  hyprpicker
 )
 
 missing=0

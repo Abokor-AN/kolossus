@@ -1,15 +1,27 @@
 #!/bin/bash
 
-if ! pgrep -x hyprlock >/dev/null; then
-  hyprlock &
-fi
+set -euo pipefail
 
-hyprctl switchxkblayout all 0 >/dev/null 2>&1
+if pgrep -x swaylock >/dev/null; then
+  exit 0
+fi
 
 (
   sleep 3
-  if pgrep -x hyprlock >/dev/null; then
-    hyprctl dispatch dpms off >/dev/null 2>&1
+  if pgrep -x swaylock >/dev/null; then
+    niri msg action power-off-monitors >/dev/null 2>&1 || true
   fi
 ) &
 
+exec swaylock \
+  --daemonize \
+  --color 05182e \
+  --image "$HOME/.config/swaybg/retro-82.jpg" \
+  --scaling fill \
+  --font "JetBrainsMono Nerd Font" \
+  --indicator-radius 100 \
+  --indicator-thickness 4 \
+  --inside-color 05182ecc \
+  --ring-color f6dcacff \
+  --key-hl-color faa968ff \
+  --text-color f6dcacff

@@ -10,7 +10,7 @@
 - Audio : Intel Alder Lake avec pilote SOF
 - Stockage matériel : SSD NVMe WD PC SN740 512 Go
 - Système : Arch Linux déjà installé avec Archinstall
-- Session cible : Hyprland sous Wayland avec Waybar
+- Session cible : Niri sous Wayland avec Waybar
 - Stockage : chiffrement déjà configuré
 - Démarrage : Secure Boot déjà configuré
 - Restauration : snapshots déjà configurés
@@ -21,10 +21,10 @@
 - Éditeur : Zed
 - Navigateur : Firefox
 - Gestionnaire de fichiers : Thunar
-- Écran : profil générique Omarchy (`preferred`, placement et échelle automatiques)
-- Pavé tactile : défilement naturel, tap-to-click et gestes à trois doigts
+- Écran : mode préféré, placement et échelle automatiques gérés par Niri
+- Pavé tactile : défilement naturel, tap-to-click et gestes Niri
 - Waybar : disposition compacte inspirée d’Omarchy
-- Raccourcis : raccourcis principaux d’Omarchy avec commandes autonomes
+- Raccourcis : raccourcis Kolossus adaptés au modèle en colonnes de Niri
 - Inactivité : verrouillage après cinq minutes, comme le délai Omarchy
 - Paquets : bootstrap complet depuis les dépôts officiels Arch
 - Déploiement : liens symboliques avec sauvegarde automatique

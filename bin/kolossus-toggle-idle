@@ -1,10 +1,10 @@
 #!/bin/bash
 
-if pgrep -x hypridle >/dev/null; then
-  pkill -x hypridle
+if pgrep -x swayidle >/dev/null; then
+  pkill -x swayidle
   notify-send "Kolossus" "Verrouillage automatique désactivé"
 else
-  hypridle >/dev/null 2>&1 &
+  kolossus-idle >/dev/null 2>&1 &
   notify-send "Kolossus" "Verrouillage automatique activé"
 fi
 
