@@ -92,6 +92,46 @@ configure_kernel_cmdline() {
   KERNEL_OPTIONS_CONFIGURED=1
 }
 
+configure_limine() {
+  local file=/etc/default/limine
+  local line value option
+  local current_options=""
+  local output="$TEMP_DIR/limine-default"
+  local -a missing_options=()
+
+  if ! command -v limine-entry-tool >/dev/null; then
+    printf 'Erreur : limine-entry-tool est requis pour configurer Limine.\n' >&2
+    exit 1
+  fi
+
+  sudo cat "$file" >"$output"
+
+  while IFS= read -r line || [[ -n $line ]]; do
+    [[ $line =~ ^[[:space:]]*KERNEL_CMDLINE\[default\](\+)?= ]] || continue
+    value=${line#*=}
+    value=${value#\"}
+    value=${value%\"}
+    current_options+=" $value"
+  done < <(sudo cat "$file")
+
+  for option in "${BOOT_OPTIONS[@]}"; do
+    if [[ " $current_options " != *" $option "* ]]; then
+      missing_options+=("$option")
+    fi
+  done
+
+  if ((${#missing_options[@]} > 0)); then
+    printf '\n# Kolossus : démarrage Plymouth silencieux\n' >>"$output"
+    printf 'KERNEL_CMDLINE[default]+=" %s"\n' "${missing_options[*]}" >>"$output"
+    install_system_file "$output" "$file"
+  else
+    printf 'Déjà configuré : %s contient quiet splash et les options silencieuses.\n' "$file"
+  fi
+
+  KERNEL_OPTIONS_CONFIGURED=1
+  BOOTLOADER_REBUILD=limine
+}
+
 configure_grub() {
   local file=/etc/default/grub
   local key=GRUB_CMDLINE_LINUX_DEFAULT
@@ -159,11 +199,7 @@ configure_boot_options() {
   local option
 
   if command -v limine-mkinitcpio >/dev/null && sudo test -f /etc/default/limine; then
-    install_system_file \
-      "$SYSTEM_DIR/limine/20-kolossus-plymouth.conf" \
-      /etc/limine-entry-tool.d/20-kolossus-plymouth.conf
-    KERNEL_OPTIONS_CONFIGURED=1
-    BOOTLOADER_REBUILD=limine
+    configure_limine
     return
   fi
 
@@ -191,6 +227,34 @@ configure_boot_options() {
         break
       fi
     done
+  fi
+}
+
+verify_limine_cmdline() {
+  local pkgbase kernel_name cmdline option
+  local kernels_checked=0
+
+  for pkgbase in /usr/lib/modules/*/pkgbase; do
+    [[ -f $pkgbase ]] || continue
+    kernel_name=$(<"$pkgbase")
+    [[ -n $kernel_name ]] || continue
+
+    cmdline=$(sudo limine-entry-tool --get-cmdline "$kernel_name" --no-mutex --no-hooks | tail -n 1)
+    for option in "${BOOT_OPTIONS[@]}"; do
+      if [[ " $cmdline " != *" $option "* ]]; then
+        printf 'Erreur : l’option %s manque dans la ligne Limine pour %s.\n' "$option" "$kernel_name" >&2
+        printf 'Ligne générée : %s\n' "$cmdline" >&2
+        exit 1
+      fi
+    done
+
+    printf 'Ligne Limine validée pour %s : %s\n' "$kernel_name" "$cmdline"
+    ((kernels_checked += 1))
+  done
+
+  if ((kernels_checked == 0)); then
+    printf 'Erreur : aucun noyau Limine n’a pu être vérifié.\n' >&2
+    exit 1
   fi
 }
 
@@ -324,6 +388,10 @@ esac
 if ! grep -Fq 'Running build hook: [plymouth]' "$rebuild_log"; then
   printf 'Erreur : la nouvelle image de démarrage n’a pas embarqué Plymouth.\n' >&2
   exit 1
+fi
+
+if [[ $BOOTLOADER_REBUILD == limine ]]; then
+  verify_limine_cmdline
 fi
 
 printf '\nThèmes système Kolossus installés.\n'

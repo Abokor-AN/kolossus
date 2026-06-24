@@ -77,9 +77,16 @@ le dépôt puis exécuter `./install-system-themes.sh`. Redémarrer ensuite SDDM
 ## Chargeur de démarrage non reconnu
 
 L’installateur reconnaît Limine avec `limine-mkinitcpio`, GRUB,
-`/etc/kernel/cmdline` et les entrées systemd-boot classiques. Pour un autre
-chargeur, il installe tout de même les thèmes et affiche un avertissement. Il
-faut alors ajouter manuellement les paramètres noyau suivants avant de relancer
+`/etc/kernel/cmdline` et les entrées systemd-boot classiques.
+
+Avec Limine, les options manquantes sont ajoutées directement et une seule fois à
+`/etc/default/limine`, après sauvegarde. `limine-mkinitcpio` régénère ensuite la
+configuration de démarrage et l’UKI, puis la ligne calculée est vérifiée pour
+chaque noyau installé.
+
+Pour un autre chargeur, il installe tout de même les thèmes et affiche un
+avertissement. Il faut alors ajouter manuellement les paramètres noyau suivants
+avant de relancer
 le script :
 
 ```text
