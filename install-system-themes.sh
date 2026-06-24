@@ -133,7 +133,7 @@ configure_limine() {
 }
 
 configure_limine_boot_files() {
-  local file line indent value output has_cmdline root
+  local file line indent key value output has_cmdline root
   local files_found=0
   local cmdline_files=0
   local -a files=()
@@ -159,10 +159,11 @@ configure_limine_boot_files() {
     has_cmdline=0
 
     while IFS= read -r line || [[ -n $line ]]; do
-      if [[ $line =~ ^([[:space:]]*)cmdline:[[:space:]]*(.*)$ ]]; then
+      if [[ $line =~ ^([[:space:]]*)(cmdline|kernel_cmdline):[[:space:]]*(.*)$ ]]; then
         indent=${BASH_REMATCH[1]}
-        value=${BASH_REMATCH[2]}
-        printf '%scmdline: %s\n' "$indent" "$(add_boot_options "$value")" >>"$output"
+        key=${BASH_REMATCH[2]}
+        value=${BASH_REMATCH[3]}
+        printf '%s%s: %s\n' "$indent" "$key" "$(add_boot_options "$value")" >>"$output"
         has_cmdline=1
       else
         printf '%s\n' "$line" >>"$output"
@@ -171,10 +172,10 @@ configure_limine_boot_files() {
 
     if ((has_cmdline)); then
       install_system_file "$output" "$file"
-      printf 'Ligne(s) cmdline Limine mise(s) à jour : %s\n' "$file"
+      printf 'Ligne(s) cmdline/kernel_cmdline Limine mise(s) à jour : %s\n' "$file"
       ((cmdline_files += 1))
     else
-      printf 'Information : aucune directive cmdline dans %s ; les options sont intégrées à l’UKI.\n' "$file"
+      printf 'Information : aucune directive cmdline/kernel_cmdline dans %s ; les options sont intégrées à l’UKI.\n' "$file"
     fi
   done
 
@@ -184,7 +185,7 @@ configure_limine_boot_files() {
   fi
 
   if ((cmdline_files == 0)); then
-    printf 'Aucune cmdline externe à modifier ; validation de la ligne UKI intégrée.\n'
+    printf 'Aucune cmdline/kernel_cmdline externe à modifier ; validation de la ligne UKI intégrée.\n'
   fi
 }
 

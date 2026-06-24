@@ -82,8 +82,8 @@ L’installateur reconnaît Limine avec `limine-mkinitcpio`, GRUB,
 Avec Limine, les options sont conservées dans `/etc/default/limine` pour
 résister aux reconstructions. Après `limine-mkinitcpio`, le script détecte les
 fichiers réellement chargés, notamment `/boot/limine.conf` et
-`/boot/EFI/limine/limine.conf`, puis complète leurs directives `cmdline:`. Si
-les options sont intégrées dans une UKI sans `cmdline:` externe, la ligne
+`/boot/EFI/limine/limine.conf`, puis complète leurs directives `cmdline:` ou `kernel_cmdline:`. Si
+les options sont intégrées dans une UKI sans ligne de commande externe, la ligne
 calculée par `limine-entry-tool` est vérifiée pour chaque noyau.
 
 Pour un autre chargeur, il installe tout de même les thèmes et affiche un
