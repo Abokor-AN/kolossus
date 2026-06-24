@@ -132,6 +132,62 @@ configure_limine() {
   BOOTLOADER_REBUILD=limine
 }
 
+configure_limine_boot_files() {
+  local file line indent value output has_cmdline root
+  local files_found=0
+  local cmdline_files=0
+  local -a files=()
+  local -a roots=()
+
+  for root in /boot /efi; do
+    sudo test -d "$root" && roots+=("$root")
+  done
+
+  if ((${#roots[@]} == 0)); then
+    printf 'Erreur : aucun point de montage /boot ou /efi disponible.\n' >&2
+    exit 1
+  fi
+
+  mapfile -t files < <(
+    sudo find "${roots[@]}" -maxdepth 5 -type f -name 'limine.conf' -print 2>/dev/null | sort -u
+  )
+
+  for file in "${files[@]}"; do
+    [[ -n $file ]] || continue
+    files_found=1
+    output=$(mktemp "$TEMP_DIR/limine-conf.XXXXXX")
+    has_cmdline=0
+
+    while IFS= read -r line || [[ -n $line ]]; do
+      if [[ $line =~ ^([[:space:]]*)cmdline:[[:space:]]*(.*)$ ]]; then
+        indent=${BASH_REMATCH[1]}
+        value=${BASH_REMATCH[2]}
+        printf '%scmdline: %s\n' "$indent" "$(add_boot_options "$value")" >>"$output"
+        has_cmdline=1
+      else
+        printf '%s\n' "$line" >>"$output"
+      fi
+    done < <(sudo cat "$file")
+
+    if ((has_cmdline)); then
+      install_system_file "$output" "$file"
+      printf 'Ligne(s) cmdline Limine mise(s) à jour : %s\n' "$file"
+      ((cmdline_files += 1))
+    else
+      printf 'Information : aucune directive cmdline dans %s ; les options sont intégrées à l’UKI.\n' "$file"
+    fi
+  done
+
+  if ((files_found == 0)); then
+    printf 'Erreur : aucun fichier limine.conf trouvé sous /boot ou /efi.\n' >&2
+    exit 1
+  fi
+
+  if ((cmdline_files == 0)); then
+    printf 'Aucune cmdline externe à modifier ; validation de la ligne UKI intégrée.\n'
+  fi
+}
+
 configure_grub() {
   local file=/etc/default/grub
   local key=GRUB_CMDLINE_LINUX_DEFAULT
@@ -391,6 +447,7 @@ if ! grep -Fq 'Running build hook: [plymouth]' "$rebuild_log"; then
 fi
 
 if [[ $BOOTLOADER_REBUILD == limine ]]; then
+  configure_limine_boot_files
   verify_limine_cmdline
 fi
 

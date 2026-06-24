@@ -79,15 +79,16 @@ le dépôt puis exécuter `./install-system-themes.sh`. Redémarrer ensuite SDDM
 L’installateur reconnaît Limine avec `limine-mkinitcpio`, GRUB,
 `/etc/kernel/cmdline` et les entrées systemd-boot classiques.
 
-Avec Limine, les options manquantes sont ajoutées directement et une seule fois à
-`/etc/default/limine`, après sauvegarde. `limine-mkinitcpio` régénère ensuite la
-configuration de démarrage et l’UKI, puis la ligne calculée est vérifiée pour
-chaque noyau installé.
+Avec Limine, les options sont conservées dans `/etc/default/limine` pour
+résister aux reconstructions. Après `limine-mkinitcpio`, le script détecte les
+fichiers réellement chargés, notamment `/boot/limine.conf` et
+`/boot/EFI/limine/limine.conf`, puis complète leurs directives `cmdline:`. Si
+les options sont intégrées dans une UKI sans `cmdline:` externe, la ligne
+calculée par `limine-entry-tool` est vérifiée pour chaque noyau.
 
 Pour un autre chargeur, il installe tout de même les thèmes et affiche un
 avertissement. Il faut alors ajouter manuellement les paramètres noyau suivants
-avant de relancer
-le script :
+avant de relancer le script :
 
 ```text
 quiet splash loglevel=3 systemd.show_status=false rd.systemd.show_status=false udev.log_level=3 rd.udev.log_level=3
