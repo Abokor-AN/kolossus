@@ -1,7 +1,8 @@
 # Personnalisation des écrans système
 
-Ces fichiers gèrent deux écrans distincts :
+Ces fichiers gèrent trois écrans distincts :
 
+- `limine/theme.conf` : le menu Limine affiché avant la demande LUKS ;
 - `plymouth/kolossus/` : le splash de démarrage et la saisie du mot de passe
   LUKS dans l’initramfs ;
 - `sddm/kolossus/` : la saisie du mot de passe de l’utilisateur avant la session
@@ -18,6 +19,25 @@ Le script sauvegarde les fichiers système remplacés sous
 `mkinitcpio` avant `encrypt` ou `sd-encrypt`, ajoute les paramètres de
 démarrage graphique et silencieux au chargeur reconnu, puis régénère
 l’initramfs. Il ne crée, ne reformate et ne modifie aucun volume LUKS.
+
+## Modifier Limine
+
+Le fichier `limine/theme.conf` contrôle le délai d’affichage, le branding, les couleurs, la lisibilité
+du menu, les marges et le fond d’écran de Limine. Le fond utilisé par défaut est
+`limine/background.jpg`. Il pointe par défaut vers le fond Retro-82 partagé,
+mais peut être remplacé par une autre image JPEG.
+
+Après une modification du thème ou le remplacement de cette image, exécuter :
+
+```bash
+./install-system-themes.sh
+```
+
+L’installateur copie l’image vers `limine/kolossus-wallpaper.jpg` sur la
+partition qui contient le fichier de configuration. Il fusionne ensuite les
+options visuelles dans chaque `limine.conf`, sans remplacer les entrées noyau,
+les snapshots ou leurs lignes de commande. La section est réappliquée après
+`limine-mkinitcpio` pour résister à la régénération du fichier.
 
 ## Modifier Plymouth / LUKS
 

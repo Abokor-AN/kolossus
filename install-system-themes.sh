@@ -5,6 +5,8 @@ set -eEuo pipefail
 KOLLOSSUS_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 SYSTEM_DIR="$KOLLOSSUS_DIR/system"
 BACKGROUND_SOURCE="$KOLLOSSUS_DIR/dotfiles/.config/swaybg/retro-82.jpg"
+LIMINE_THEME_SOURCE="$SYSTEM_DIR/limine/theme.conf"
+LIMINE_WALLPAPER_SOURCE="$SYSTEM_DIR/limine/background.jpg"
 BACKUP_ROOT="/var/lib/kolossus/backups/$(date +%Y%m%d-%H%M%S)"
 TEMP_DIR=$(mktemp -d)
 KERNEL_OPTIONS_CONFIGURED=0
@@ -155,6 +157,137 @@ find_limine_boot_files() {
   done
 }
 
+is_limine_theme_key() {
+  case $1 in
+    quiet | timeout | remember_last_entry | wallpaper | wallpaper_style | backdrop | \
+      interface_branding | interface_branding_color | interface_branding_colour | \
+      interface_help_hidden | interface_help_color | interface_help_colour | \
+      interface_help_color_bright | interface_help_colour_bright | term_font | \
+      term_font_size | term_font_scale | term_font_spacing | term_palette | \
+      term_palette_bright | term_background | term_foreground | \
+      term_background_bright | term_foreground_bright | term_margin | \
+      term_margin_gradient)
+      return 0
+      ;;
+  esac
+
+  return 1
+}
+
+canonical_limine_theme_key() {
+  case $1 in
+    interface_branding_colour) printf "%s" interface_branding_color ;;
+    interface_help_colour) printf "%s" interface_help_color ;;
+    interface_help_colour_bright) printf "%s" interface_help_color_bright ;;
+    *) printf "%s" "$1" ;;
+  esac
+}
+
+validate_limine_theme() {
+  local line key
+  local -A seen=()
+
+  while IFS= read -r line || [[ -n $line ]]; do
+    [[ $line =~ ^[[:space:]]*($|#) ]] && continue
+
+    if [[ ! $line =~ ^[[:space:]]*([[:alnum:]_]+):[[:space:]]*.+$ ]]; then
+      printf "Erreur : ligne de thème Limine invalide : %s\n" "$line" >&2
+      exit 1
+    fi
+
+    key=${BASH_REMATCH[1],,}
+    key=$(canonical_limine_theme_key "$key")
+    if ! is_limine_theme_key "$key"; then
+      printf "Erreur : option de thème Limine non autorisée : %s\n" "$key" >&2
+      exit 1
+    fi
+    if [[ -n ${seen[$key]:-} ]]; then
+      printf "Erreur : option de thème Limine dupliquée : %s\n" "$key" >&2
+      exit 1
+    fi
+    seen[$key]=1
+  done <"$LIMINE_THEME_SOURCE"
+}
+
+render_limine_theme() {
+  local input=$1
+  local output=$2
+  local line key theme_line
+  local in_theme_block=0
+  local -A applied_keys=()
+
+  while IFS= read -r theme_line || [[ -n $theme_line ]]; do
+    [[ $theme_line =~ ^[[:space:]]*($|#) ]] && continue
+    [[ $theme_line =~ ^[[:space:]]*([[:alnum:]_]+):[[:space:]]*.+$ ]] || continue
+    key=${BASH_REMATCH[1],,}
+    key=$(canonical_limine_theme_key "$key")
+    applied_keys[$key]=1
+  done <"$LIMINE_THEME_SOURCE"
+
+  while IFS= read -r line || [[ -n $line ]]; do
+    if [[ $line == "# BEGIN KOLOSSUS LIMINE THEME" ]]; then
+      if [[ -s $output ]] && [[ -z $(tail -n 1 "$output") ]]; then
+        sed -i '$d' "$output"
+      fi
+      in_theme_block=1
+      continue
+    fi
+    if ((in_theme_block)); then
+      if [[ $line == "# END KOLOSSUS LIMINE THEME" ]]; then
+        in_theme_block=0
+      fi
+      continue
+    fi
+
+    if [[ $line =~ ^[[:space:]]*([[:alnum:]_]+): ]]; then
+      key=${BASH_REMATCH[1],,}
+      key=$(canonical_limine_theme_key "$key")
+      if [[ -n ${applied_keys[$key]:-} ]]; then
+        continue
+      fi
+    fi
+
+    printf "%s\n" "$line" >>"$output"
+  done <"$input"
+
+  printf "\n# BEGIN KOLOSSUS LIMINE THEME\n" >>"$output"
+  while IFS= read -r theme_line || [[ -n $theme_line ]]; do
+    printf "%s\n" "$theme_line" >>"$output"
+  done <"$LIMINE_THEME_SOURCE"
+  printf "# END KOLOSSUS LIMINE THEME\n" >>"$output"
+}
+
+install_limine_wallpaper() {
+  local config_file=$1
+  local boot_root
+
+  case $config_file in
+    /boot/*) boot_root=/boot ;;
+    /efi/*) boot_root=/efi ;;
+    *)
+      printf "Erreur : emplacement Limine non pris en charge : %s\n" "$config_file" >&2
+      exit 1
+      ;;
+  esac
+
+  install_system_file "$LIMINE_WALLPAPER_SOURCE" "$boot_root/limine/kolossus-wallpaper.jpg"
+}
+
+verify_limine_theme_file() {
+  local file=$1
+  local line
+
+  while IFS= read -r line || [[ -n $line ]]; do
+    [[ $line =~ ^[[:space:]]*($|#) ]] && continue
+    if ! sudo grep -Fqx -- "$line" "$file"; then
+      printf "Erreur : option du thème Limine absente de %s : %s\n" "$file" "$line" >&2
+      exit 1
+    fi
+  done <"$LIMINE_THEME_SOURCE"
+
+  printf "Thème Limine vérifié dans %s.\n" "$file"
+}
+
 verify_limine_boot_file() {
   local file=$1
   local line value option
@@ -181,7 +314,7 @@ verify_limine_boot_file() {
 
 configure_limine_boot_files() {
   local required=${1:-false}
-  local file line indent key value output has_cmdline
+  local file line indent key value output themed_output has_cmdline
   local -a files=()
 
   LIMINE_BOOT_FILES_FOUND=0
@@ -205,9 +338,13 @@ configure_limine_boot_files() {
         printf "%s\n" "$line" >>"$output"
       fi
     done < <(sudo cat "$file")
+    themed_output=$(mktemp "$TEMP_DIR/limine-themed.XXXXXX")
+    render_limine_theme "$output" "$themed_output"
+    install_limine_wallpaper "$file"
+    install_system_file "$themed_output" "$file"
+    verify_limine_theme_file "$file"
 
     if ((has_cmdline)); then
-      install_system_file "$output" "$file"
       verify_limine_boot_file "$file"
       LIMINE_CMDLINE_FILES_CONFIGURED=1
     else
@@ -406,7 +543,8 @@ verify_plymouth_hooks() {
   printf 'Hooks mkinitcpio validés : %s\n' "$effective_hooks"
 }
 
-printf 'Configuration initiale du splash dans le chargeur de démarrage...\n'
+validate_limine_theme
+printf 'Configuration initiale du splash et du thème Limine...\n'
 configure_boot_options
 printf '\n'
 printf 'Génération des assets Plymouth...\n'
