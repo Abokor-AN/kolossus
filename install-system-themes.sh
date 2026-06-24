@@ -9,6 +9,8 @@ BACKUP_ROOT="/var/lib/kolossus/backups/$(date +%Y%m%d-%H%M%S)"
 TEMP_DIR=$(mktemp -d)
 KERNEL_OPTIONS_CONFIGURED=0
 BOOTLOADER_REBUILD=mkinitcpio
+LIMINE_BOOT_FILES_FOUND=0
+LIMINE_CMDLINE_FILES_CONFIGURED=0
 
 BOOT_OPTIONS=(
   quiet
@@ -132,29 +134,63 @@ configure_limine() {
   BOOTLOADER_REBUILD=limine
 }
 
-configure_limine_boot_files() {
-  local file line indent key value output has_cmdline root
-  local files_found=0
-  local cmdline_files=0
-  local -a files=()
-  local -a roots=()
-
-  for root in /boot /efi; do
-    sudo test -d "$root" && roots+=("$root")
-  done
-
-  if ((${#roots[@]} == 0)); then
-    printf 'Erreur : aucun point de montage /boot ou /efi disponible.\n' >&2
-    exit 1
-  fi
-
-  mapfile -t files < <(
-    sudo find "${roots[@]}" -maxdepth 5 -type f -name 'limine.conf' -print 2>/dev/null | sort -u
+find_limine_boot_files() {
+  local file
+  local -a candidates=(
+    /boot/limine/limine.conf
+    /boot/limine.conf
+    /boot/EFI/arch-limine/limine.conf
+    /boot/EFI/BOOT/limine.conf
+    /boot/EFI/limine/limine.conf
+    /efi/limine/limine.conf
+    /efi/EFI/arch-limine/limine.conf
+    /efi/EFI/BOOT/limine.conf
+    /efi/EFI/limine/limine.conf
   )
+
+  for file in "${candidates[@]}"; do
+    if sudo test -f "$file"; then
+      printf "%s\n" "$file"
+    fi
+  done
+}
+
+verify_limine_boot_file() {
+  local file=$1
+  local line value option
+  local cmdline_count=0
+
+  while IFS= read -r line || [[ -n $line ]]; do
+    if [[ $line =~ ^[[:space:]]*(cmdline|kernel_cmdline):[[:space:]]*(.*)$ ]]; then
+      value=${BASH_REMATCH[2]}
+      ((cmdline_count += 1))
+
+      for option in "${BOOT_OPTIONS[@]}"; do
+        if [[ " $value " != *" $option "* ]]; then
+          printf "Erreur : %s manque dans une ligne cmdline de %s.\n" "$option" "$file" >&2
+          exit 1
+        fi
+      done
+    fi
+  done < <(sudo cat "$file")
+
+  if ((cmdline_count > 0)); then
+    printf "Vérifié : quiet splash est présent dans %s.\n" "$file"
+  fi
+}
+
+configure_limine_boot_files() {
+  local required=${1:-false}
+  local file line indent key value output has_cmdline
+  local -a files=()
+
+  LIMINE_BOOT_FILES_FOUND=0
+  LIMINE_CMDLINE_FILES_CONFIGURED=0
+  mapfile -t files < <(find_limine_boot_files)
 
   for file in "${files[@]}"; do
     [[ -n $file ]] || continue
-    files_found=1
+    LIMINE_BOOT_FILES_FOUND=1
     output=$(mktemp "$TEMP_DIR/limine-conf.XXXXXX")
     has_cmdline=0
 
@@ -163,29 +199,25 @@ configure_limine_boot_files() {
         indent=${BASH_REMATCH[1]}
         key=${BASH_REMATCH[2]}
         value=${BASH_REMATCH[3]}
-        printf '%s%s: %s\n' "$indent" "$key" "$(add_boot_options "$value")" >>"$output"
+        printf "%s%s: %s\n" "$indent" "$key" "$(add_boot_options "$value")" >>"$output"
         has_cmdline=1
       else
-        printf '%s\n' "$line" >>"$output"
+        printf "%s\n" "$line" >>"$output"
       fi
     done < <(sudo cat "$file")
 
     if ((has_cmdline)); then
       install_system_file "$output" "$file"
-      printf 'Ligne(s) cmdline/kernel_cmdline Limine mise(s) à jour : %s\n' "$file"
-      ((cmdline_files += 1))
+      verify_limine_boot_file "$file"
+      LIMINE_CMDLINE_FILES_CONFIGURED=1
     else
-      printf 'Information : aucune directive cmdline/kernel_cmdline dans %s ; les options sont intégrées à l’UKI.\n' "$file"
+      printf "Information : aucune directive cmdline/kernel_cmdline dans %s ; les options sont intégrées à l’UKI.\n" "$file"
     fi
   done
 
-  if ((files_found == 0)); then
-    printf 'Erreur : aucun fichier limine.conf trouvé sous /boot ou /efi.\n' >&2
+  if ((LIMINE_BOOT_FILES_FOUND == 0)) && [[ $required == true ]]; then
+    printf "Erreur : aucun fichier limine.conf trouvé sous /boot ou /efi.\n" >&2
     exit 1
-  fi
-
-  if ((cmdline_files == 0)); then
-    printf 'Aucune cmdline/kernel_cmdline externe à modifier ; validation de la ligne UKI intégrée.\n'
   fi
 }
 
@@ -255,6 +287,24 @@ configure_boot_options() {
   local current_cmdline
   local option
 
+  # Modifier immédiatement les fichiers réellement lus par Limine. Cette étape
+  # ne dépend volontairement ni de /etc/default/limine ni de limine-mkinitcpio.
+  configure_limine_boot_files
+
+  if ((LIMINE_BOOT_FILES_FOUND)); then
+    if command -v limine-mkinitcpio >/dev/null && sudo test -f /etc/default/limine; then
+      configure_limine
+    elif ((LIMINE_CMDLINE_FILES_CONFIGURED)); then
+      KERNEL_OPTIONS_CONFIGURED=1
+      BOOTLOADER_REBUILD=mkinitcpio
+    else
+      printf "Erreur : un fichier limine.conf existe, mais aucune directive cmdline modifiable " >&2
+      printf "et aucune configuration persistante /etc/default/limine n’est disponible.\n" >&2
+      exit 1
+    fi
+    return
+  fi
+
   if command -v limine-mkinitcpio >/dev/null && sudo test -f /etc/default/limine; then
     configure_limine
     return
@@ -273,7 +323,7 @@ configure_boot_options() {
   while IFS= read -r entry; do
     configure_loader_entry "$entry"
   done < <(sudo find /boot/loader/entries /efi/loader/entries \
-    -maxdepth 1 -type f -name '*.conf' -print 2>/dev/null || true)
+    -maxdepth 1 -type f -name "*.conf" -print 2>/dev/null || true)
 
   if (( !KERNEL_OPTIONS_CONFIGURED )); then
     current_cmdline=$(</proc/cmdline)
@@ -356,6 +406,9 @@ verify_plymouth_hooks() {
   printf 'Hooks mkinitcpio validés : %s\n' "$effective_hooks"
 }
 
+printf 'Configuration initiale du splash dans le chargeur de démarrage...\n'
+configure_boot_options
+printf '\n'
 printf 'Génération des assets Plymouth...\n'
 bash "$SYSTEM_DIR/plymouth/kolossus/render-assets.sh" "$TEMP_DIR/plymouth"
 
@@ -409,8 +462,6 @@ install_system_file \
   "$SYSTEM_DIR/sddm/20-kolossus-theme.conf" \
   /etc/sddm.conf.d/zz-kolossus-theme.conf
 
-printf '\nConfiguration du splash dans le chargeur de démarrage...\n'
-configure_boot_options
 
 if (( !KERNEL_OPTIONS_CONFIGURED )); then
   printf 'Avertissement : chargeur de démarrage non reconnu.\n' >&2
@@ -448,7 +499,9 @@ if ! grep -Fq 'Running build hook: [plymouth]' "$rebuild_log"; then
 fi
 
 if [[ $BOOTLOADER_REBUILD == limine ]]; then
-  configure_limine_boot_files
+  # limine-mkinitcpio peut recréer limine.conf : réappliquer puis vérifier la
+  # modification sur le fichier final effectivement présent sous /boot ou /efi.
+  configure_limine_boot_files true
   verify_limine_cmdline
 fi
 

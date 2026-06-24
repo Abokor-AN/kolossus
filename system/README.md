@@ -80,11 +80,14 @@ L’installateur reconnaît Limine avec `limine-mkinitcpio`, GRUB,
 `/etc/kernel/cmdline` et les entrées systemd-boot classiques.
 
 Avec Limine, les options sont conservées dans `/etc/default/limine` pour
-résister aux reconstructions. Après `limine-mkinitcpio`, le script détecte les
-fichiers réellement chargés, notamment `/boot/limine.conf` et
-`/boot/EFI/limine/limine.conf`, puis complète leurs directives `cmdline:` ou `kernel_cmdline:`. Si
-les options sont intégrées dans une UKI sans ligne de commande externe, la ligne
-calculée par `limine-entry-tool` est vérifiée pour chaque noyau.
+résister aux reconstructions. Indépendamment de cette configuration, le script
+modifie directement `/boot/limine/limine.conf`, `/boot/limine.conf` et les
+emplacements EFI connus lorsqu’ils existent. Il complète chaque directive
+`cmdline:` ou `kernel_cmdline:` avant la reconstruction, puis recommence après
+`limine-mkinitcpio` pour éviter que celui-ci annule la modification. Le fichier
+final est relu et validé. Si les options sont intégrées dans une UKI sans ligne
+de commande externe, la ligne calculée par `limine-entry-tool` est également
+vérifiée pour chaque noyau.
 
 Pour un autre chargeur, il installe tout de même les thèmes et affiche un
 avertissement. Il faut alors ajouter manuellement les paramètres noyau suivants
