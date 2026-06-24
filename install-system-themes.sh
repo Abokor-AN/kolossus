@@ -10,6 +10,16 @@ TEMP_DIR=$(mktemp -d)
 KERNEL_OPTIONS_CONFIGURED=0
 BOOTLOADER_REBUILD=mkinitcpio
 
+BOOT_OPTIONS=(
+  quiet
+  splash
+  loglevel=3
+  systemd.show_status=false
+  rd.systemd.show_status=false
+  udev.log_level=3
+  rd.udev.log_level=3
+)
+
 cleanup() {
   rm -rf -- "$TEMP_DIR"
 }
@@ -62,7 +72,7 @@ add_boot_options() {
   local value=$1
   local option
 
-  for option in quiet splash; do
+  for option in "${BOOT_OPTIONS[@]}"; do
     if [[ " $value " != *" $option "* ]]; then
       value+=" $option"
     fi
@@ -107,7 +117,7 @@ configure_grub() {
   done < <(sudo cat "$file")
 
   if (( !found )); then
-    printf '%s="quiet splash"\n' "$key" >>"$TEMP_DIR/grub"
+    printf '%s="%s"\n' "$key" "$(add_boot_options "")" >>"$TEMP_DIR/grub"
   fi
 
   install_system_file "$TEMP_DIR/grub" "$file"
@@ -145,6 +155,8 @@ configure_loader_entry() {
 
 configure_boot_options() {
   local entry
+  local current_cmdline
+  local option
 
   if command -v limine-mkinitcpio >/dev/null && sudo test -f /etc/default/limine; then
     install_system_file \
@@ -170,9 +182,57 @@ configure_boot_options() {
   done < <(sudo find /boot/loader/entries /efi/loader/entries \
     -maxdepth 1 -type f -name '*.conf' -print 2>/dev/null || true)
 
-  if (( !KERNEL_OPTIONS_CONFIGURED )) && grep -qw splash /proc/cmdline; then
+  if (( !KERNEL_OPTIONS_CONFIGURED )); then
+    current_cmdline=$(</proc/cmdline)
     KERNEL_OPTIONS_CONFIGURED=1
+    for option in "${BOOT_OPTIONS[@]}"; do
+      if [[ " $current_cmdline " != *" $option "* ]]; then
+        KERNEL_OPTIONS_CONFIGURED=0
+        break
+      fi
+    done
   fi
+}
+
+verify_plymouth_hooks() {
+  local effective_hooks
+  local hook
+  local index=0
+  local plymouth_index=-1
+  local encryption_index=-1
+  local -a hooks=()
+
+  effective_hooks=$(sudo bash -c '
+    source /etc/mkinitcpio.conf
+    shopt -s nullglob
+    for config in /etc/mkinitcpio.conf.d/*.conf; do
+      source "$config"
+    done
+    printf "%s\n" "${HOOKS[*]}"
+  ')
+  read -r -a hooks <<<"$effective_hooks"
+
+  for hook in "${hooks[@]}"; do
+    [[ $hook == plymouth ]] && plymouth_index=$index
+    if ((encryption_index < 0)) && [[ $hook == encrypt || $hook == sd-encrypt ]]; then
+      encryption_index=$index
+    fi
+    ((index += 1))
+  done
+
+  if ((plymouth_index < 0)); then
+    printf 'Erreur : le hook Plymouth est absent de la configuration mkinitcpio effective.\n' >&2
+    printf 'Hooks effectifs : %s\n' "$effective_hooks" >&2
+    exit 1
+  fi
+
+  if ((encryption_index >= 0 && plymouth_index > encryption_index)); then
+    printf 'Erreur : le hook Plymouth doit précéder encrypt/sd-encrypt.\n' >&2
+    printf 'Hooks effectifs : %s\n' "$effective_hooks" >&2
+    exit 1
+  fi
+
+  printf 'Hooks mkinitcpio validés : %s\n' "$effective_hooks"
 }
 
 printf 'Génération des assets Plymouth...\n'
@@ -187,9 +247,15 @@ for source in \
     "/usr/share/plymouth/themes/kolossus/$(basename "$source")"
 done
 
-if [[ $(plymouth-set-default-theme 2>/dev/null || true) != kolossus ]]; then
+current_plymouth_theme=$(sudo plymouth-set-default-theme 2>/dev/null || true)
+if [[ $current_plymouth_theme != kolossus ]]; then
   backup_system_path /etc/plymouth/plymouthd.conf
-  sudo plymouth-set-default-theme kolossus
+fi
+
+sudo plymouth-set-default-theme kolossus
+if [[ $(sudo plymouth-set-default-theme) != kolossus ]]; then
+  printf 'Erreur : Plymouth n’utilise pas le thème Kolossus après sélection.\n' >&2
+  exit 1
 fi
 
 if sudo grep -RqsE '^[[:space:]]*ALL_config=' /etc/mkinitcpio.d; then
@@ -199,8 +265,10 @@ if sudo grep -RqsE '^[[:space:]]*ALL_config=' /etc/mkinitcpio.d; then
 fi
 
 install_system_file \
-  "$SYSTEM_DIR/mkinitcpio/90-kolossus-plymouth.conf" \
-  /etc/mkinitcpio.conf.d/90-kolossus-plymouth.conf
+  "$SYSTEM_DIR/mkinitcpio/zz-kolossus-plymouth.conf" \
+  /etc/mkinitcpio.conf.d/zz-kolossus-plymouth.conf
+
+verify_plymouth_hooks
 
 printf '\nInstallation du thème SDDM...\n'
 for source in "$SYSTEM_DIR/sddm/kolossus"/*; do
@@ -225,22 +293,38 @@ configure_boot_options
 
 if (( !KERNEL_OPTIONS_CONFIGURED )); then
   printf 'Avertissement : chargeur de démarrage non reconnu.\n' >&2
-  printf 'Ajoute manuellement « quiet splash » aux paramètres du noyau.\n' >&2
+  printf 'Ajoute manuellement les paramètres documentés dans system/README.md.\n' >&2
 fi
 
 printf '\nRégénération des images de démarrage...\n'
+rebuild_log="$TEMP_DIR/initramfs-rebuild.log"
+
 case $BOOTLOADER_REBUILD in
   limine)
-    sudo limine-mkinitcpio
+    if ! sudo limine-mkinitcpio 2>&1 | tee "$rebuild_log"; then
+      printf 'Erreur : la reconstruction Limine/UKI a échoué.\n' >&2
+      exit 1
+    fi
     ;;
   grub)
-    sudo mkinitcpio -P
+    if ! sudo mkinitcpio -P 2>&1 | tee "$rebuild_log"; then
+      printf 'Erreur : la reconstruction mkinitcpio a échoué.\n' >&2
+      exit 1
+    fi
     sudo grub-mkconfig -o /boot/grub/grub.cfg
     ;;
   *)
-    sudo mkinitcpio -P
+    if ! sudo mkinitcpio -P 2>&1 | tee "$rebuild_log"; then
+      printf 'Erreur : la reconstruction mkinitcpio a échoué.\n' >&2
+      exit 1
+    fi
     ;;
 esac
+
+if ! grep -Fq 'Running build hook: [plymouth]' "$rebuild_log"; then
+  printf 'Erreur : la nouvelle image de démarrage n’a pas embarqué Plymouth.\n' >&2
+  exit 1
+fi
 
 printf '\nThèmes système Kolossus installés.\n'
 printf 'Sauvegardes éventuelles : %s\n' "$BACKUP_ROOT"

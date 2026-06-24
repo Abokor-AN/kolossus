@@ -15,9 +15,9 @@ Après chaque modification, appliquer les thèmes avec :
 
 Le script sauvegarde les fichiers système remplacés sous
 `/var/lib/kolossus/backups/`, installe les thèmes, ajoute Plymouth aux hooks
-`mkinitcpio` avant `encrypt` ou `sd-encrypt`, ajoute `quiet splash` au chargeur
-de démarrage reconnu, puis régénère l’initramfs. Il ne crée, ne reformate et ne
-modifie aucun volume LUKS.
+`mkinitcpio` avant `encrypt` ou `sd-encrypt`, ajoute les paramètres de
+démarrage graphique et silencieux au chargeur reconnu, puis régénère
+l’initramfs. Il ne crée, ne reformate et ne modifie aucun volume LUKS.
 
 ## Modifier Plymouth / LUKS
 
@@ -35,6 +35,11 @@ compris entre 0 et 1.
 Plymouth est inclus dans l’initramfs : il faut toujours relancer
 `install-system-themes.sh` après une modification. Le résultat complet se
 vérifie au redémarrage, au moment où le volume chiffré est demandé.
+
+Changer uniquement la valeur avec `plymouth-set-default-theme` ne modifie pas
+l’image déjà amorcée. L’installateur sélectionne donc Kolossus, reconstruit avec
+`limine-mkinitcpio` pour Limine/UKI ou `mkinitcpio -P` autrement, puis vérifie
+dans le journal de construction que le hook `plymouth` a réellement été exécuté.
 
 ## Modifier SDDM
 
@@ -78,5 +83,5 @@ faut alors ajouter manuellement les paramètres noyau suivants avant de relancer
 le script :
 
 ```text
-quiet splash
+quiet splash loglevel=3 systemd.show_status=false rd.systemd.show_status=false udev.log_level=3 rd.udev.log_level=3
 ```
