@@ -10,7 +10,7 @@ case $choice in
   systemctl suspend
   ;;
 "Log out")
-  niri msg action quit --skip-confirmation
+  hyprctl dispatch exit
   ;;
 "Reboot")
   systemctl reboot

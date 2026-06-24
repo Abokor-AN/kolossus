@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -euo pipefail
-
 script_path=$(readlink -f "${BASH_SOURCE[0]}")
 kolossus_dir=$(cd -- "$(dirname -- "$script_path")/.." && pwd)
 verification_dir="$kolossus_dir/verification"
@@ -12,15 +10,21 @@ pending_file="$verification_dir/pending"
 sleep 8
 mkdir -p "$verification_dir"
 
-niri validate --config "$HOME/.config/niri/config.kdl" >"$verification_dir/config-validation.txt" 2>&1
-niri msg --json outputs >"$verification_dir/outputs.json" 2>&1
-niri msg version >"$verification_dir/version.txt" 2>&1
+hyprctl configerrors >"$verification_dir/configerrors.txt" 2>&1 || true
+hyprctl monitors -j >"$verification_dir/monitors.json" 2>&1 || true
+
+focused_monitor=$(hyprctl monitors -j 2>/dev/null | jq -r '.[] | select(.focused) | .name' | head -n 1)
+if [[ -n $focused_monitor ]] && grim -o "$focused_monitor" "$verification_dir/latest.png"; then
+  capture_status=ok
+else
+  capture_status=failed
+fi
 
 {
-  printf 'niri=%s\n' "$(pgrep -x niri >/dev/null && printf running || printf missing)"
+  printf 'capture=%s\n' "$capture_status"
+  printf 'hyprland=%s\n' "$(pgrep -x Hyprland >/dev/null && printf running || printf missing)"
   printf 'waybar=%s\n' "$(pgrep -x waybar >/dev/null && printf running || printf missing)"
   printf 'mako=%s\n' "$(pgrep -x mako >/dev/null && printf running || printf missing)"
-  printf 'swayidle=%s\n' "$(pgrep -x swayidle >/dev/null && printf running || printf missing)"
 } >"$verification_dir/status.txt"
 
 date --iso-8601=seconds >"$verification_dir/done"

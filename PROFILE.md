@@ -10,21 +10,23 @@
 - Audio : Intel Alder Lake avec pilote SOF
 - Stockage matériel : SSD NVMe WD PC SN740 512 Go
 - Système : Arch Linux déjà installé avec Archinstall
-- Session cible : Niri sous Wayland avec Waybar
+- Session cible : Hyprland sous Wayland avec Waybar
 - Stockage : chiffrement déjà configuré
 - Démarrage : Secure Boot déjà configuré
 - Restauration : snapshots déjà configurés
 - Locale, clavier système et fuseau horaire : déjà configurés
 - Base visuelle : thème Omarchy Retro-82
+- Déverrouillage LUKS : thème Plymouth Kolossus, modifiable dans `system/plymouth/`
+- Connexion utilisateur : thème SDDM Kolossus, modifiable dans `system/sddm/`
 - Terminal : Alacritty
 - Shell : Bash
 - Éditeur : Zed
 - Navigateur : Firefox
 - Gestionnaire de fichiers : Thunar
-- Écran : mode préféré, placement et échelle automatiques gérés par Niri
-- Pavé tactile : défilement naturel, tap-to-click et gestes Niri
+- Écran : profil générique Omarchy (`preferred`, placement et échelle automatiques)
+- Pavé tactile : défilement naturel, tap-to-click et gestes à trois doigts
 - Waybar : disposition compacte inspirée d’Omarchy
-- Raccourcis : raccourcis Kolossus adaptés au modèle en colonnes de Niri
+- Raccourcis : raccourcis principaux d’Omarchy avec commandes autonomes
 - Inactivité : verrouillage après cinq minutes, comme le délai Omarchy
 - Paquets : bootstrap complet depuis les dépôts officiels Arch
 - Déploiement : liens symboliques avec sauvegarde automatique

@@ -1,20 +1,22 @@
 #!/bin/bash
 
 required_commands=(
-  niri
-  niri-session
-  swayidle
-  swaylock
-  xwayland-satellite
+  Hyprland
+  hypridle
+  hyprlock
   waybar
   fuzzel
   cliphist
+  grim
   rofimoji
+  slurp
   wl-copy
   alacritty
   firefox
   thunar
   zeditor
+  plymouth-set-default-theme
+  sddm-greeter-qt6
   mako
   swaybg
   swayosd-server
@@ -27,6 +29,7 @@ required_commands=(
   bluetui
   btop
   jq
+  hyprpicker
 )
 
 missing=0

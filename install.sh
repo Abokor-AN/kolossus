@@ -34,28 +34,14 @@ backup_and_link() {
 
 config_directories=(
   alacritty
+  hypr
   mako
-  niri
   swaybg
   swayosd
   fuzzel
   waybar
   wireplumber
 )
-
-legacy_config_directories=(
-  hypr
-)
-
-for directory in "${legacy_config_directories[@]}"; do
-  target="$CONFIG_HOME/$directory"
-  if [[ -e $target || -L $target ]]; then
-    backup_target="$BACKUP_ROOT/${target#"$HOME"/}"
-    mkdir -p "$(dirname "$backup_target")"
-    mv "$target" "$backup_target"
-    printf 'Ancienne configuration retirée : %s -> %s\n' "$target" "$backup_target"
-  fi
-done
 
 config_files=(
   environment.d/kolossus.conf
@@ -81,6 +67,6 @@ if command -v xdg-mime >/dev/null; then
   XDG_CONFIG_HOME="$CONFIG_HOME" xdg-mime default thunar.desktop inode/directory
 fi
 
-printf '\nKolossus est déployé. Ferme puis ouvre la session Niri.\n'
+printf '\nKolossus est déployé. Ferme puis rouvre la session Hyprland.\n'
 printf 'Sauvegardes éventuelles : %s\n' "$BACKUP_ROOT"
 

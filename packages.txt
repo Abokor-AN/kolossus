@@ -1,15 +1,17 @@
 # Bureau Wayland
-niri
-swayidle
-swaylock
+hyprland
+hypridle
+hyprlock
+hyprpicker
+hyprsunset
+uwsm
 waybar
 fuzzel
 mako
 swaybg
 swayosd
-xwayland-satellite
 xorg-xwayland
-xdg-desktop-portal-gnome
+xdg-desktop-portal-hyprland
 xdg-desktop-portal-gtk
 
 # Applications choisies
@@ -27,6 +29,7 @@ bluez
 bluez-utils
 brightnessctl
 cliphist
+grim
 impala
 iwd
 libnotify
@@ -35,6 +38,8 @@ nm-connection-editor
 pavucontrol
 playerctl
 rofimoji
+satty
+slurp
 wiremix
 wl-clipboard
 wtype
@@ -51,6 +56,7 @@ wireplumber
 # Session et sécurité du bureau
 accountsservice
 gnome-keyring
+plymouth
 polkit
 polkit-gnome
 sddm
